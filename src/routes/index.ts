@@ -1,0 +1,16 @@
+import { Router } from 'express';
+import { authRoutes } from './authRoutes';
+import { dashboardRoutes } from './dashboardRoutes';
+import { expenseRoutes } from './expenseRoutes';
+import { incomeRoutes } from './incomeRoutes';
+
+export const apiRouter = Router();
+
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/expenses', expenseRoutes);
+apiRouter.use('/income', incomeRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
+
+apiRouter.get('/health', (_req, res) => {
+  res.json({ success: true, message: 'OK', data: { uptime: process.uptime() } });
+});
