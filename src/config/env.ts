@@ -28,6 +28,8 @@ const envSchema = z.object({
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().default(5),
 
+  // JSON string of a Firebase service-account credential object; empty disables push notifications
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().default(''),
   // Path to a Firebase service-account JSON; empty disables push notifications
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().default(''),
 });
