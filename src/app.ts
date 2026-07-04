@@ -4,7 +4,6 @@ import cors from 'cors';
 import express, { Express } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import swaggerUi from 'swagger-ui-express';
 import { env, isTest } from './config/env';
 import { morganStream } from './config/logger';
 import { swaggerSpec } from './config/swagger';
@@ -34,17 +33,31 @@ export function createApp(): Express {
   }
 
   app.use(env.API_PREFIX, apiRateLimiter, apiRouter);
-  app.use(
-    `${env.API_PREFIX}/docs`,
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, {
-      customCssUrl: 'https://unpkg.com/swagger-ui-dist@5/swagger-ui.css',
-      customJs: [
-        'https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js',
-        'https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
-      ],
-    }),
-  );
+
+  app.get(`${env.API_PREFIX}/docs/swagger.json`, (_req, res) => res.json(swaggerSpec));
+  app.get(`${env.API_PREFIX}/docs`, (_req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ExpenseFlow API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: '${env.API_PREFIX}/docs/swagger.json',
+      dom_id: '#swagger-ui',
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: 'BaseLayout',
+    });
+  </script>
+</body>
+</html>`);
+  });
 
   app.use(notFoundHandler);
   app.use(errorHandler);
