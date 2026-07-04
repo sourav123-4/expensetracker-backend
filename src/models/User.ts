@@ -7,6 +7,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   currency: string;
+  /** FCM device registration tokens (one per installed device). */
+  fcmTokens: string[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
@@ -26,6 +28,7 @@ const userSchema = new Schema<IUser>(
     // select: false keeps the hash out of every query unless explicitly requested
     password: { type: String, required: true, select: false },
     currency: { type: String, default: 'INR', maxlength: 8 },
+    fcmTokens: { type: [String], default: [] },
   },
   { timestamps: true },
 );

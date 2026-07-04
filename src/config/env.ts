@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().default(4000),
+  PORT: z.coerce.number().default(8000),
   API_PREFIX: z.string().default('/api/v1'),
   CORS_ORIGIN: z.string().default('*'),
 
@@ -27,6 +27,9 @@ const envSchema = z.object({
 
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().default(5),
+
+  // Path to a Firebase service-account JSON; empty disables push notifications
+  FIREBASE_SERVICE_ACCOUNT_PATH: z.string().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -7,10 +7,10 @@ Node.js + Express + TypeScript + MongoDB backend for the ExpenseFlow personal fi
 ```bash
 npm install
 cp .env.example .env       # then set MONGODB_URI (local mongod or MongoDB Atlas)
-npm run dev                # http://localhost:4000/api/v1
+npm run dev                # http://localhost:8000/api/v1
 ```
 
-Swagger UI: **http://localhost:4000/api/v1/docs**
+Swagger UI: **http://localhost:8000/api/v1/docs**
 
 Tests need no database — they spin up `mongodb-memory-server`:
 

@@ -3,10 +3,12 @@ import { authRoutes } from './authRoutes';
 import { dashboardRoutes } from './dashboardRoutes';
 import { expenseRoutes } from './expenseRoutes';
 import { incomeRoutes } from './incomeRoutes';
+import { userRoutes } from './userRoutes';
 
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/users', userRoutes);
 apiRouter.use('/expenses', expenseRoutes);
 apiRouter.use('/income', incomeRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
