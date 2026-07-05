@@ -17,41 +17,60 @@ import { logger } from './logger';
  */
 export const isGeminiConfigured = (): boolean => env.GEMINI_API_KEY.trim().length > 0;
 
-const MODEL = 'gemini-2.0-flash';
+// gemini-2.0-flash has a 0-request free-tier quota on newly created API keys as of
+// mid-2026 (Google moved the free tier to the 2.5 line) — 2.5-flash-lite is the
+// cheapest/fastest model that still gets a real free-tier allowance.
+const MODEL = 'gemini-2.5-flash-lite';
 
 interface GenerateContentConfig {
   responseMimeType: string;
   responseSchema?: Record<string, unknown>;
 }
 
-/** One shared call shape for every Gemini feature below — returns the raw text part, or null on any failure. */
-async function generateText(prompt: string, generationConfig: GenerateContentConfig): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig,
-        }),
-      },
-    );
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (!res.ok) {
-      logger.error(`Gemini request failed (${res.status})`);
+/**
+ * One shared call shape for every Gemini feature below — returns the raw text
+ * part, or null on any failure. The free tier routinely returns transient 429
+ * (per-minute quota) and 503 ("high demand") on the first try, so one retry
+ * after a short delay turns most of those into a success instead of a
+ * user-visible "couldn't understand that" for something that would have
+ * worked half a second later.
+ */
+async function generateText(prompt: string, generationConfig: GenerateContentConfig): Promise<string | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await sleep(800);
+
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        logger.error(`Gemini request failed (${res.status})`);
+        if ((res.status === 429 || res.status === 503) && attempt === 0) continue;
+        return null;
+      }
+
+      const data = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? null;
+    } catch (err) {
+      logger.error(`Gemini request errored (${(err as Error).message})`);
+      if (attempt === 0) continue;
       return null;
     }
-
-    const data = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? null;
-  } catch (err) {
-    logger.error(`Gemini request errored (${(err as Error).message})`);
-    return null;
   }
+  return null;
 }
 
 /** Asks Gemini which of our fixed categories best fits an expense title. Returns null on any failure. */
