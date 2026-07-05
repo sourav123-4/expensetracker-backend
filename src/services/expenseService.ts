@@ -1,11 +1,13 @@
 import { UploadApiResponse } from 'cloudinary';
 import { cloudinary, isCloudinaryConfigured } from '../config/cloudinary';
+import { isGeminiConfigured, suggestExpenseCategory } from '../config/gemini';
 import { IExpense } from '../models/Expense';
 import {
   ExpenseListFilters,
   ExpenseSort,
   expenseRepository,
 } from '../repositories/expenseRepository';
+import { ExpenseCategory } from '../types/domain';
 import { ApiError } from '../utils/ApiError';
 import { PaginationMeta } from '../utils/ApiResponse';
 import { buildMeta, toPageParams } from '../utils/pagination';
@@ -41,6 +43,14 @@ export const expenseService = {
   async delete(userId: string, id: string): Promise<void> {
     const deleted = await expenseRepository.delete(userId, id);
     if (!deleted) throw ApiError.notFound('Expense not found');
+  },
+
+  /** Suggests one of our fixed categories for an expense title via Gemini's free tier. */
+  async categorize(title: string): Promise<ExpenseCategory | null> {
+    if (!isGeminiConfigured()) {
+      throw ApiError.badRequest('AI categorization is not configured on this server');
+    }
+    return suggestExpenseCategory(title);
   },
 
   /** Uploads a receipt image buffer to Cloudinary and stores the URL on the expense. */

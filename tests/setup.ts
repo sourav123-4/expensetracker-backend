@@ -16,6 +16,16 @@ jest.mock('../src/config/firebase', () => ({
   getFirebaseAuth: () => ({ verifyIdToken: mockVerifyIdToken }),
 }));
 
+// Same rationale as the firebase mock above (minus the ESM issue): mocking our
+// thin config wrapper lets tests flip "is Gemini configured" per-case without
+// making a real network call to the Gemini API.
+export const mockIsGeminiConfigured = jest.fn(() => false);
+export const mockSuggestExpenseCategory = jest.fn();
+jest.mock('../src/config/gemini', () => ({
+  isGeminiConfigured: mockIsGeminiConfigured,
+  suggestExpenseCategory: mockSuggestExpenseCategory,
+}));
+
 let mongo: MongoMemoryServer;
 
 beforeAll(async () => {

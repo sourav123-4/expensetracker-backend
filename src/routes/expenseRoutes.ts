@@ -4,6 +4,7 @@ import { authGuard } from '../middlewares/authGuard';
 import { receiptUpload } from '../middlewares/upload';
 import { validate } from '../middlewares/validate';
 import {
+  categorizeExpenseSchema,
   createExpenseSchema,
   listExpenseQuerySchema,
   objectIdSchema,
@@ -46,6 +47,32 @@ expenseRoutes
   .route('/')
   .get(validate(listExpenseQuerySchema, 'query'), expenseController.list)
   .post(validate(createExpenseSchema), expenseController.create);
+
+/**
+ * @openapi
+ * /expenses/categorize:
+ *   post:
+ *     tags: [Expenses]
+ *     summary: Suggest a category for an expense title (Gemini free tier — no-ops with 400 if unconfigured)
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title]
+ *             properties:
+ *               title: { type: string }
+ *     responses:
+ *       200: { description: "Suggested category (or null if the model couldn't decide)" }
+ *       400: { description: AI categorization not configured on this server }
+ */
+expenseRoutes.post(
+  '/categorize',
+  validate(categorizeExpenseSchema),
+  expenseController.categorize,
+);
 
 /**
  * @openapi

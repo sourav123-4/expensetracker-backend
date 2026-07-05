@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { createApp } from '../src/app';
 import { registerAndLogin } from './helpers';
+import { mockIsGeminiConfigured, mockSuggestExpenseCategory } from './setup';
 
 const app = createApp();
 
@@ -52,6 +53,50 @@ describe('Expenses', () => {
 
     it('requires auth', async () => {
       await request(app).post('/api/v1/expenses').send(sampleExpense).expect(401);
+    });
+  });
+
+  describe('POST /expenses/categorize', () => {
+    afterEach(() => {
+      mockIsGeminiConfigured.mockReturnValue(false);
+      mockSuggestExpenseCategory.mockReset();
+    });
+
+    it('400s when Gemini is not configured', async () => {
+      const res = await request(app)
+        .post('/api/v1/expenses/categorize')
+        .set(authed())
+        .send({ title: 'Uber to airport' })
+        .expect(400);
+      expect(res.body.message).toMatch(/not configured/i);
+    });
+
+    it('returns the suggested category when configured', async () => {
+      mockIsGeminiConfigured.mockReturnValue(true);
+      mockSuggestExpenseCategory.mockResolvedValue('Travel');
+
+      const res = await request(app)
+        .post('/api/v1/expenses/categorize')
+        .set(authed())
+        .send({ title: 'Uber to airport' })
+        .expect(200);
+      expect(res.body.data.category).toBe('Travel');
+      expect(mockSuggestExpenseCategory).toHaveBeenCalledWith('Uber to airport');
+    });
+
+    it('rejects a too-short title', async () => {
+      await request(app)
+        .post('/api/v1/expenses/categorize')
+        .set(authed())
+        .send({ title: 'a' })
+        .expect(400);
+    });
+
+    it('requires auth', async () => {
+      await request(app)
+        .post('/api/v1/expenses/categorize')
+        .send({ title: 'Uber to airport' })
+        .expect(401);
     });
   });
 

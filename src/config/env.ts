@@ -38,6 +38,10 @@ const envSchema = z.object({
   // every platform's ID token is issued for when the client configures GoogleSignin with
   // this same ID as `webClientId` — empty disables the /auth/google endpoint.
   GOOGLE_WEB_CLIENT_ID: z.string().default(''),
+
+  // Free-tier Google Gemini API key (https://aistudio.google.com/apikey) used to suggest
+  // an expense category from its title. Empty disables /expenses/categorize (400, not a crash).
+  GEMINI_API_KEY: z.string().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

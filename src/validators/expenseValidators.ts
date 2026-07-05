@@ -21,6 +21,10 @@ const expenseBody = z.object({
 export const createExpenseSchema = expenseBody;
 export const updateExpenseSchema = expenseBody.partial();
 
+export const categorizeExpenseSchema = z.object({
+  title: z.string().trim().min(2, 'Title must be at least 2 characters').max(120),
+});
+
 export const listExpenseQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),

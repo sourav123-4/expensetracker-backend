@@ -28,6 +28,11 @@ export const expenseController = {
     sendSuccess(res, { expense });
   }),
 
+  categorize: asyncHandler(async (req: Request, res: Response) => {
+    const category = await expenseService.categorize(req.body.title as string);
+    sendSuccess(res, { category });
+  }),
+
   update: asyncHandler(async (req: Request, res: Response) => {
     const expense = await expenseService.update(req.userId as string, req.params.id, req.body);
     sendSuccess(res, { expense }, { message: 'Expense updated' });
