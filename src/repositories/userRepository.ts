@@ -9,8 +9,22 @@ export const userRepository = {
     return User.create(data);
   },
 
+  /** Google accounts have no password — they authenticate via ID token only. */
+  createGoogleUser(data: { name: string; email: string }): Promise<IUser> {
+    return User.create({ ...data, authProvider: 'google' });
+  },
+
+  /** Phone accounts have no password or email — they authenticate via ID token only. */
+  createPhoneUser(data: { name: string; phone: string }): Promise<IUser> {
+    return User.create({ ...data, authProvider: 'phone' });
+  },
+
   findByEmail(email: string): Promise<IUser | null> {
     return User.findOne({ email: email.toLowerCase() }).exec();
+  },
+
+  findByPhone(phone: string): Promise<IUser | null> {
+    return User.findOne({ phone }).exec();
   },
 
   /** Includes the password hash — for login/credential checks only. */

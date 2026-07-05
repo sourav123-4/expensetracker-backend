@@ -32,6 +32,12 @@ const envSchema = z.object({
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().default(''),
   // Path to a Firebase service-account JSON; empty disables push notifications
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().default(''),
+
+  // The Google Sign-In "Web client" OAuth ID (from Firebase Console → Authentication →
+  // Sign-in method → Google, or Google Cloud Console → Credentials). This is the audience
+  // every platform's ID token is issued for when the client configures GoogleSignin with
+  // this same ID as `webClientId` — empty disables the /auth/google endpoint.
+  GOOGLE_WEB_CLIENT_ID: z.string().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

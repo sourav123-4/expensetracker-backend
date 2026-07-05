@@ -14,6 +14,16 @@ export const authController = {
     sendSuccess(res, { user, ...tokens }, { message: 'Logged in' });
   }),
 
+  google: asyncHandler(async (req: Request, res: Response) => {
+    const { user, tokens } = await authService.loginWithGoogle(req.body.idToken);
+    sendSuccess(res, { user, ...tokens }, { message: 'Logged in' });
+  }),
+
+  phone: asyncHandler(async (req: Request, res: Response) => {
+    const { user, tokens } = await authService.loginWithPhone(req.body.idToken);
+    sendSuccess(res, { user, ...tokens }, { message: 'Logged in' });
+  }),
+
   refresh: asyncHandler(async (req: Request, res: Response) => {
     const tokens = await authService.refresh(req.body.refreshToken);
     sendSuccess(res, tokens, { message: 'Token refreshed' });

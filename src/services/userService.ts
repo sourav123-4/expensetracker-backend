@@ -9,7 +9,7 @@ const MAX_IMPORT_ROWS = 5000;
 export interface ExportBundle {
   version: 1;
   exportedAt: string;
-  user: { name: string; email: string; currency: string };
+  user: { name: string; email?: string; phone?: string; currency: string };
   expenses: Partial<IExpense>[];
   income: Partial<IIncome>[];
 }
@@ -56,7 +56,7 @@ export const userService = {
     return {
       version: 1,
       exportedAt: new Date().toISOString(),
-      user: { name: user.name, email: user.email, currency: user.currency },
+      user: { name: user.name, email: user.email, phone: user.phone, currency: user.currency },
       expenses: strip(expenses) as Partial<IExpense>[],
       income: strip(income) as Partial<IIncome>[],
     };

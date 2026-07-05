@@ -1,9 +1,21 @@
+import { OAuth2Client } from 'google-auth-library';
 import request from 'supertest';
 import { createApp } from '../src/app';
 import { PasswordReset } from '../src/models/PasswordReset';
 import { authService } from '../src/services/authService';
 import { emailService } from '../src/services/emailService';
+import { mockVerifyIdToken } from './setup';
 import { registerAndLogin, TEST_USER } from './helpers';
+
+/** Stubs the Google verification round-trip so tests never call Google's servers. */
+function mockGooglePayload(
+  payload: Partial<{ email: string; email_verified: boolean; name: string }> | null,
+) {
+  // `verifyIdToken` is overloaded, which defeats jest.spyOn's return-type
+  // inference — cast to the generic SpyInstance to mock a plain resolved value.
+  const spy = jest.spyOn(OAuth2Client.prototype, 'verifyIdToken') as jest.SpyInstance;
+  return spy.mockResolvedValue({ getPayload: () => payload });
+}
 
 const app = createApp();
 
@@ -63,6 +75,105 @@ describe('Auth', () => {
         .expect(401);
 
       expect(wrongPass.body.message).toBe(unknown.body.message);
+    });
+  });
+
+  describe('POST /auth/google', () => {
+    it('creates a new passwordless account on first sign-in', async () => {
+      mockGooglePayload({ email: 'googler@expenseflow.app', email_verified: true, name: 'Googler' });
+
+      const res = await request(app)
+        .post('/api/v1/auth/google')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(200);
+
+      expect(res.body.data.user.email).toBe('googler@expenseflow.app');
+      expect(res.body.data.user.password).toBeUndefined();
+      expect(res.body.data.accessToken).toEqual(expect.any(String));
+    });
+
+    it('logs into an existing account by email instead of duplicating it', async () => {
+      await request(app).post('/api/v1/auth/register').send(TEST_USER).expect(201);
+      mockGooglePayload({ email: TEST_USER.email, email_verified: true, name: TEST_USER.name });
+
+      const res = await request(app)
+        .post('/api/v1/auth/google')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(200);
+
+      expect(res.body.data.user.email).toBe(TEST_USER.email);
+
+      const { User } = await import('../src/models/User');
+      expect(await User.countDocuments({ email: TEST_USER.email })).toBe(1);
+    });
+
+    it('rejects an unverified Google email', async () => {
+      mockGooglePayload({ email: 'sneaky@expenseflow.app', email_verified: false });
+
+      await request(app)
+        .post('/api/v1/auth/google')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(401);
+    });
+
+    it('rejects a token Google fails to verify', async () => {
+      const spy = jest.spyOn(OAuth2Client.prototype, 'verifyIdToken') as jest.SpyInstance;
+      spy.mockRejectedValue(new Error('bad token'));
+
+      await request(app)
+        .post('/api/v1/auth/google')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(401);
+    });
+  });
+
+  describe('POST /auth/phone', () => {
+    it('creates a new passwordless, emailless account on first sign-in', async () => {
+      mockVerifyIdToken.mockResolvedValue({ phone_number: '+15551234567' });
+
+      const res = await request(app)
+        .post('/api/v1/auth/phone')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(200);
+
+      expect(res.body.data.user.phone).toBe('+15551234567');
+      expect(res.body.data.user.password).toBeUndefined();
+      expect(res.body.data.accessToken).toEqual(expect.any(String));
+    });
+
+    it('logs into an existing account by phone instead of duplicating it', async () => {
+      mockVerifyIdToken.mockResolvedValue({ phone_number: '+15551234567' });
+      await request(app)
+        .post('/api/v1/auth/phone')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(200);
+
+      const res = await request(app)
+        .post('/api/v1/auth/phone')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(200);
+      expect(res.body.data.user.phone).toBe('+15551234567');
+
+      const { User } = await import('../src/models/User');
+      expect(await User.countDocuments({ phone: '+15551234567' })).toBe(1);
+    });
+
+    it('rejects a token with no phone number claim', async () => {
+      mockVerifyIdToken.mockResolvedValue({});
+
+      await request(app)
+        .post('/api/v1/auth/phone')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(401);
+    });
+
+    it('rejects a token Firebase fails to verify', async () => {
+      mockVerifyIdToken.mockRejectedValue(new Error('bad token'));
+
+      await request(app)
+        .post('/api/v1/auth/phone')
+        .send({ idToken: 'fake-but-long-enough-token' })
+        .expect(401);
     });
   });
 

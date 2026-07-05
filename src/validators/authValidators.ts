@@ -21,6 +21,14 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(20, 'Invalid refresh token'),
 });
 
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(20, 'Invalid Google credential'),
+});
+
+export const phoneAuthSchema = z.object({
+  idToken: z.string().min(20, 'Invalid phone credential'),
+});
+
 export const forgotPasswordSchema = z.object({ email });
 
 export const verifyOtpSchema = z.object({

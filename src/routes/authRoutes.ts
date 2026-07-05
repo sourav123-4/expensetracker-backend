@@ -5,7 +5,9 @@ import { authRateLimiter } from '../middlewares/rateLimiter';
 import { validate } from '../middlewares/validate';
 import {
   forgotPasswordSchema,
+  googleAuthSchema,
   loginSchema,
+  phoneAuthSchema,
   refreshSchema,
   registerSchema,
   resetPasswordSchema,
@@ -58,6 +60,48 @@ authRoutes.post('/register', authRateLimiter, validate(registerSchema), authCont
  *       401: { description: Invalid credentials }
  */
 authRoutes.post('/login', authRateLimiter, validate(loginSchema), authController.login);
+
+/**
+ * @openapi
+ * /auth/google:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Log in (or register) with a Google ID token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [idToken]
+ *             properties:
+ *               idToken: { type: string }
+ *     responses:
+ *       200: { description: Logged in — returns user + token pair }
+ *       401: { description: Invalid Google credential }
+ */
+authRoutes.post('/google', authRateLimiter, validate(googleAuthSchema), authController.google);
+
+/**
+ * @openapi
+ * /auth/phone:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Log in (or register) with a Firebase Phone Auth ID token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [idToken]
+ *             properties:
+ *               idToken: { type: string }
+ *     responses:
+ *       200: { description: Logged in — returns user + token pair }
+ *       401: { description: Invalid phone credential }
+ */
+authRoutes.post('/phone', authRateLimiter, validate(phoneAuthSchema), authController.phone);
 
 /**
  * @openapi
