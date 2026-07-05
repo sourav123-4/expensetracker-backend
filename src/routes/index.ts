@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { aiRoutes } from './aiRoutes';
 import { authRoutes } from './authRoutes';
 import { dashboardRoutes } from './dashboardRoutes';
 import { expenseRoutes } from './expenseRoutes';
@@ -12,6 +13,7 @@ apiRouter.use('/users', userRoutes);
 apiRouter.use('/expenses', expenseRoutes);
 apiRouter.use('/income', incomeRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
+apiRouter.use('/ai', aiRoutes);
 
 apiRouter.get('/health', (_req, res) => {
   res.json({ success: true, message: 'OK', data: { uptime: process.uptime() } });

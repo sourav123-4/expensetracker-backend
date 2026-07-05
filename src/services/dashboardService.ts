@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { generateDashboardInsight, isGeminiConfigured } from '../config/gemini';
 import { Expense } from '../models/Expense';
 import { Income } from '../models/Income';
 
@@ -177,5 +178,18 @@ export const dashboardService = {
       loanOutstanding: null,
       savingsProgress: null,
     };
+  },
+
+  /** One AI-generated sentence about the month, or null if Gemini isn't configured/has nothing useful to say. */
+  async getInsight(userId: string, month: string): Promise<string | null> {
+    if (!isGeminiConfigured()) return null;
+    const summary = await this.getSummary(userId, month);
+    return generateDashboardInsight({
+      month: summary.month,
+      totalIncome: summary.totalIncome,
+      totalExpense: summary.totalExpense,
+      categoryBreakdown: summary.categoryBreakdown.map((c) => ({ category: c.category, total: c.total })),
+      trend: summary.trend,
+    });
   },
 };

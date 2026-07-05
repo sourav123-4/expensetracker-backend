@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { createApp } from '../src/app';
 import { registerAndLogin } from './helpers';
+import { mockGenerateDashboardInsight, mockIsGeminiConfigured } from './setup';
 
 const app = createApp();
 
@@ -104,5 +105,31 @@ describe('Income + Dashboard', () => {
 
   it('rejects a malformed month', async () => {
     await request(app).get('/api/v1/dashboard/summary?month=2026-13').set(authed()).expect(400);
+  });
+
+  describe('GET /dashboard/insight', () => {
+    afterEach(() => {
+      mockIsGeminiConfigured.mockReturnValue(false);
+      mockGenerateDashboardInsight.mockReset();
+    });
+
+    it('returns null when Gemini is not configured', async () => {
+      const res = await request(app)
+        .get('/api/v1/dashboard/insight?month=2026-07')
+        .set(authed())
+        .expect(200);
+      expect(res.body.data.insight).toBeNull();
+    });
+
+    it('returns the generated sentence when configured', async () => {
+      mockIsGeminiConfigured.mockReturnValue(true);
+      mockGenerateDashboardInsight.mockResolvedValue('You spent 22% more on Fuel this month.');
+
+      const res = await request(app)
+        .get('/api/v1/dashboard/insight?month=2026-07')
+        .set(authed())
+        .expect(200);
+      expect(res.body.data.insight).toBe('You spent 22% more on Fuel this month.');
+    });
   });
 });

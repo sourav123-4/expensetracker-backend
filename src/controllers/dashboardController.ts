@@ -9,4 +9,10 @@ export const dashboardController = {
     const summary = await dashboardService.getSummary(req.userId as string, month);
     sendSuccess(res, summary);
   }),
+
+  insight: asyncHandler(async (req: Request, res: Response) => {
+    const month = req.query.month as string;
+    const insight = await dashboardService.getInsight(req.userId as string, month);
+    sendSuccess(res, { insight });
+  }),
 };

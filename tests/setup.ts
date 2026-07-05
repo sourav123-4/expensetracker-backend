@@ -21,9 +21,13 @@ jest.mock('../src/config/firebase', () => ({
 // making a real network call to the Gemini API.
 export const mockIsGeminiConfigured = jest.fn(() => false);
 export const mockSuggestExpenseCategory = jest.fn();
+export const mockParseTransactionText = jest.fn();
+export const mockGenerateDashboardInsight = jest.fn();
 jest.mock('../src/config/gemini', () => ({
   isGeminiConfigured: mockIsGeminiConfigured,
   suggestExpenseCategory: mockSuggestExpenseCategory,
+  parseTransactionText: mockParseTransactionText,
+  generateDashboardInsight: mockGenerateDashboardInsight,
 }));
 
 let mongo: MongoMemoryServer;

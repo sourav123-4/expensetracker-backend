@@ -34,3 +34,20 @@ dashboardRoutes.use(authGuard);
  *       200: { description: Dashboard summary }
  */
 dashboardRoutes.get('/summary', validate(summaryQuerySchema, 'query'), dashboardController.summary);
+
+/**
+ * @openapi
+ * /dashboard/insight:
+ *   get:
+ *     tags: [Dashboard]
+ *     summary: One AI-generated sentence about the month (Gemini free tier — insight is null if unconfigured or no data)
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema: { type: string, example: "2026-07" }
+ *         description: Defaults to the current month (UTC)
+ *     responses:
+ *       200: { description: "{ insight: string | null }" }
+ */
+dashboardRoutes.get('/insight', validate(summaryQuerySchema, 'query'), dashboardController.insight);
